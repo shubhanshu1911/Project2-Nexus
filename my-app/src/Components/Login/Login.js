@@ -3,6 +3,7 @@ import basestyle from "../Base.module.css";
 import loginstyle from "./Login.module.css";
 import axios from "axios";
 import { useNavigate, NavLink } from "react-router-dom";
+
 const Login = ({ setUserState }) => {
   const navigate = useNavigate();
   const [formErrors, setFormErrors] = useState({});
@@ -12,13 +13,6 @@ const Login = ({ setUserState }) => {
     password: "",
   });
 
-  const changeHandler = (e) => {
-    const { name, value } = e.target;
-    setUserDetails({
-      ...user,
-      [name]: value,
-    });
-  };
   const validateForm = (values) => {
     const error = {};
     const regex = /^[^\s+@]+@[^\s@]+\.[^\s@]{2,}$/i;
@@ -33,25 +27,39 @@ const Login = ({ setUserState }) => {
     return error;
   };
 
+  const changeHandler = (e) => {
+    const { name, value } = e.target;
+    setUserDetails({
+      ...user,
+      [name]: value,
+    });
+
+    // Validate on input change
+    setFormErrors(validateForm({ ...user, [name]: value }));
+  };
+
   const loginHandler = (e) => {
     e.preventDefault();
     setFormErrors(validateForm(user));
     setIsSubmit(true);
-    // if (!formErrors) {
-
-    // }
   };
 
   useEffect(() => {
     if (Object.keys(formErrors).length === 0 && isSubmit) {
-      console.log(user);
-      axios.post("http://localhost:9002/login", user).then((res) => {
-        alert(res.data.message);
-        setUserState(res.data.user);
-        navigate("/", { replace: true });
-      });
+      axios.post("http://localhost:8000/login", user)
+        .then((res) => {
+          console.log("Server response:", res);
+          alert(res.data.message);
+          setUserState(res.data.user);
+          navigate("/", { replace: true });
+        })
+        .catch((error) => {
+          console.error("Login request failed:", error);
+          // Handle error appropriately, e.g., show a user-friendly message
+        });
     }
-  }, [formErrors]);
+  }, [formErrors, isSubmit, navigate, setUserState, user]);
+
   return (
     <div className={loginstyle.login}>
       <form>
@@ -82,4 +90,5 @@ const Login = ({ setUserState }) => {
     </div>
   );
 };
+
 export default Login;
